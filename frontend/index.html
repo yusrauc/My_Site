@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Notes</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 40px auto; }
+    input { padding: 8px; width: 70%; }
+    button { padding: 8px 12px; }
+  </style>
+</head>
+<body>
+  <h1>My Notes</h1>
+  <input id="text" placeholder="Write a note..." />
+  <button onclick="addItem()">Add</button>
+  <ul id="list"></ul>
+
+  <script>
+    async function load() {
+      const res = await fetch("/api/items");
+      const items = await res.json();
+      document.getElementById("list").innerHTML =
+        items.map((i) => `<li>${i.text}</li>`).join("");
+    }
+
+    async function addItem() {
+      const input = document.getElementById("text");
+      if (!input.value.trim()) return;
+      await fetch("/api/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: input.value }),
+      });
+      input.value = "";
+      load();
+    }
+
+    load();
+  </script>
+</body>
+</html>
