@@ -1,20 +1,20 @@
-import { MongoClient } from "mongodb";
-
-const client = new MongoClient(process.env.MONGODB_URI);
-const clientPromise = client.connect();
+import { getDatabase } from "@netlify/database";
 
 export default async (req) => {
-  const db = (await clientPromise).db("mysite");
-  const notes = db.collection("notes");
+  const db = getDatabase();
 
   if (req.method === "POST") {
     const { text } = await req.json();
-    const result = await notes.insertOne({ text, createdAt: new Date() });
-    return Response.json({ _id: result.insertedId, text }, { status: 201 });
+    const rows = await db.sql`
+      INSERT INTO notes (text) VALUES (${text}) RETURNING id, text
+    `;
+    return Response.json(rows[0], { status: 201 });
   }
 
-  const items = await notes.find().sort({ createdAt: -1 }).toArray();
-  return Response.json(items);
+  const rows = await db.sql`
+    SELECT id, text FROM notes ORDER BY created_at DESC
+  `;
+  return Response.json(rows);
 };
 
 export const config = { path: "/api/items" };
